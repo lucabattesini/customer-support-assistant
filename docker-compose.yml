@@ -1,0 +1,13 @@
+services:
+  backend:
+    build: ./back-end
+    env_file:
+      - path: ./back-end/.env
+        required: false
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend-data:/app/data
+
+volumes:
+  backend-data:
