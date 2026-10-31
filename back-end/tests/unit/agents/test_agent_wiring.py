@@ -42,7 +42,7 @@ def tools(session_factory, fixed_clock, store_config):
     context = ToolContext(
         session_factory=session_factory, clock=fixed_clock, store_config=store_config
     )
-    return build_tools(context, PromptBuilder(BASE_DIR / "prompts"))
+    return build_tools(context, PromptBuilder(BASE_DIR / "prompts").tool_description)
 
 
 def build_agent(model, tools, max_turns=6, max_steps=10):

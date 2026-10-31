@@ -18,7 +18,8 @@ def tool_context(session_factory, fixed_clock, store_config):
 @pytest.fixture
 def call_tool(tool_context):
     tools = {
-        tool.name: tool for tool in build_tools(tool_context, PromptBuilder(BASE_DIR / "prompts"))
+        tool.name: tool
+        for tool in build_tools(tool_context, PromptBuilder(BASE_DIR / "prompts").tool_description)
     }
 
     def call(name, arguments=None):

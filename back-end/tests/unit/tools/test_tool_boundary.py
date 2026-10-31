@@ -58,21 +58,21 @@ def test_unexpected_error_is_logged_and_hidden(context, caplog):
 
 
 def test_registry_builds_every_tool_with_its_description(context, prompts):
-    tools = build_tools(context, prompts)
+    tools = build_tools(context, prompts.tool_description)
 
     assert [tool.name for tool in tools] == [spec.name for spec in TOOL_SPECS]
     assert all(tool.description == prompts.tool_description(tool.name) for tool in tools)
 
 
 def test_registry_builds_a_subset(context, prompts):
-    tools = build_tools(context, prompts, names=["get_policy"])
+    tools = build_tools(context, prompts.tool_description, names=["get_policy"])
 
     assert [tool.name for tool in tools] == ["get_policy"]
 
 
 def test_registry_rejects_unknown_tool_names(context, prompts):
     with pytest.raises(ValueError, match="nope"):
-        build_tools(context, prompts, names=["nope"])
+        build_tools(context, prompts.tool_description, names=["nope"])
 
 
 @pytest.mark.parametrize(
@@ -90,7 +90,9 @@ def test_registry_rejects_unknown_tool_names(context, prompts):
 def test_invalid_arguments_return_error_instead_of_raising(
     context, prompts, tool_name, arguments, field
 ):
-    tool = next(tool for tool in build_tools(context, prompts) if tool.name == tool_name)
+    tool = next(
+        tool for tool in build_tools(context, prompts.tool_description) if tool.name == tool_name
+    )
 
     payload = json.loads(tool.invoke(arguments))
 

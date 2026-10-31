@@ -1,10 +1,9 @@
-from collections.abc import Collection
+from collections.abc import Callable, Collection
 from typing import Any
 
 from langchain_core.tools import BaseTool, StructuredTool
 from pydantic import BaseModel
 
-from app.agents.shared.prompt_builder import PromptBuilder
 from app.tools import (
     check_return_eligibility,
     get_current_datetime,
@@ -28,13 +27,15 @@ TOOL_SPECS: tuple[ToolSpec[Any], ...] = (
 
 
 def build_tools(
-    context: ToolContext, prompts: PromptBuilder, names: Collection[str] | None = None
+    context: ToolContext,
+    describe: Callable[[str], str],
+    names: Collection[str] | None = None,
 ) -> list[BaseTool]:
     """Build LangChain tools from the tool specs.
 
     Args:
         context: Dependencies shared by the tools.
-        prompts: Source of the tool descriptions shown to the model.
+        describe: Returns the description shown to the model for a tool name.
         names: Optional subset of tools to build; all tools when omitted.
 
     Returns:
@@ -44,14 +45,14 @@ def build_tools(
     if unknown:
         raise ValueError(f"Unknown tools: {sorted(unknown)}")
     return [
-        _to_langchain_tool(spec, context, prompts)
+        _to_langchain_tool(spec, context, describe)
         for spec in TOOL_SPECS
         if names is None or spec.name in names
     ]
 
 
 def _to_langchain_tool[InputT: BaseModel](
-    spec: ToolSpec[InputT], context: ToolContext, prompts: PromptBuilder
+    spec: ToolSpec[InputT], context: ToolContext, describe: Callable[[str], str]
 ) -> BaseTool:
     def run(**arguments: Any) -> str:
         return execute_tool(spec, context, spec.input_model.model_validate(arguments))
@@ -59,7 +60,7 @@ def _to_langchain_tool[InputT: BaseModel](
     return StructuredTool.from_function(
         func=run,
         name=spec.name,
-        description=prompts.tool_description(spec.name),
+        description=describe(spec.name),
         args_schema=spec.input_model,
         handle_validation_error=validation_error_payload,
     )
