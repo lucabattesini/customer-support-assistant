@@ -12,10 +12,10 @@ def build_chat_model(settings: Settings) -> BaseChatModel:
     """Create the chat model served through the OpenRouter OpenAI-compatible API.
 
     Raises:
-        LLMNotConfiguredError: When the API key or the model name is missing.
+        LLMNotConfiguredError: When the provider URL, API key or model name is missing.
     """
     if not settings.llm_configured:
-        raise LLMNotConfiguredError("OPENROUTER_API_KEY and LLM_MODEL must be set")
+        raise LLMNotConfiguredError("LLM_BASE_URL, OPENROUTER_API_KEY and LLM_MODEL must be set")
     return ChatOpenAI(
         model=settings.llm_model,
         base_url=settings.llm_base_url,

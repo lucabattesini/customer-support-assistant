@@ -3,6 +3,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.agents.customer_support.factory import build_customer_support_agent
 from app.api.routers import chat_router, health_router
@@ -23,6 +24,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     """
     app = FastAPI(title="Customer Support Assistant", lifespan=_lifespan)
     app.state.settings = settings or get_settings()
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=app.state.settings.cors_origin_list,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type"],
+    )
     app.include_router(health_router.router)
     app.include_router(chat_router.router)
     return app
@@ -32,7 +39,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings: Settings = app.state.settings
     configure_logging(settings.log_level)
-    engine = build_engine(settings.resolved_database_url)
+    engine = build_engine(settings.database_url)
     init_db(engine)
     store_config = load_store_config(settings.store_config_path)
 
@@ -47,6 +54,3 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         engine.dispose()
-
-
-app = create_app()
