@@ -26,7 +26,7 @@ def chat(
     except LLMNotConfiguredError as error:
         raise HTTPException(
             status.HTTP_503_SERVICE_UNAVAILABLE,
-            "The assistant is not configured: set OPENROUTER_API_KEY and LLM_MODEL",
+            "The assistant is not configured: set LLM_BASE_URL, OPENROUTER_API_KEY and LLM_MODEL",
         ) from error
     except AgentError as error:
         logger.warning("Agent failed to reply: %s", error)

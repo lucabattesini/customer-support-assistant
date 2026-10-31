@@ -5,11 +5,11 @@ from app.db.session import build_engine, build_session_factory, init_db, session
 
 def main() -> None:
     settings = get_settings()
-    engine = build_engine(settings.resolved_database_url)
+    engine = build_engine(settings.database_url)
     init_db(engine)
     with session_scope(build_session_factory(engine)) as session:
         load_sample_data(session)
-    print(f"Sample data loaded into {settings.resolved_database_url}")
+    print(f"Sample data loaded into {settings.database_url}")
 
 
 if __name__ == "__main__":

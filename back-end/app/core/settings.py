@@ -20,20 +20,26 @@ class Settings(BaseSettings):
 
     openrouter_api_key: str | None = None
     llm_model: str | None = None
-    llm_base_url: str = "https://openrouter.ai/api/v1"
+    llm_base_url: str | None = None
     llm_timeout_seconds: float = Field(default=30, gt=0)
     llm_max_retries: int = Field(default=2, ge=0)
-    database_url: str | None = None
+    database_url: str
     reference_date: date | None = None
     history_max_turns: int = Field(default=6, ge=1)
     agent_max_steps: int = Field(default=10, ge=1)
     max_message_length: int = Field(default=2000, ge=1)
     log_level: str = "INFO"
+    cors_origins: str = ""
     store_config_path: Path = BASE_DIR / "config" / "store.toml"
     prompts_dir: Path = BASE_DIR / "prompts"
 
     @field_validator(
-        "openrouter_api_key", "llm_model", "database_url", "reference_date", mode="before"
+        "openrouter_api_key",
+        "llm_model",
+        "llm_base_url",
+        "database_url",
+        "reference_date",
+        mode="before",
     )
     @classmethod
     def empty_string_to_none(cls, value: Any) -> Any:
@@ -43,16 +49,17 @@ class Settings(BaseSettings):
         return value
 
     @property
-    def resolved_database_url(self) -> str:
-        """Database URL, defaulting to a SQLite file inside the project `data` folder."""
-        if self.database_url:
-            return self.database_url
-        return f"sqlite:///{(BASE_DIR / 'data' / 'app.db').as_posix()}"
+    def cors_origin_list(self) -> list[str]:
+        """Origins allowed to call the API from a browser, from a comma-separated value.
+
+        Empty by default, so no browser origin is allowed unless configured.
+        """
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
     def llm_configured(self) -> bool:
-        """Whether the LLM provider credentials and model are set."""
-        return bool(self.openrouter_api_key and self.llm_model)
+        """Whether the LLM provider URL, credentials and model are all set."""
+        return bool(self.llm_base_url and self.openrouter_api_key and self.llm_model)
 
 
 @lru_cache

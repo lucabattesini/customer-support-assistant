@@ -101,7 +101,7 @@ def test_chat_without_llm_configuration_answers_503(make_client):
     response = make_client().post("/chat", json={"message": "Hello"})
 
     assert response.status_code == 503
-    assert "OPENROUTER_API_KEY" in response.json()["detail"]
+    assert "LLM_BASE_URL" in response.json()["detail"]
 
 
 @pytest.mark.parametrize("error", [LLMUnavailableError("timeout"), AgentStepLimitError("loop")])
@@ -113,9 +113,38 @@ def test_agent_failures_answer_503(make_client, error):
 
 
 def test_startup_assembles_real_agent_when_llm_is_configured(make_client):
-    client = make_client(openrouter_api_key="test-key", llm_model="provider/model")
+    client = make_client(
+        llm_base_url="https://llm.example/api/v1",
+        openrouter_api_key="test-key",
+        llm_model="provider/model",
+    )
 
     controller = client.app.state.chat_controller
 
     assert isinstance(controller._agent, CustomerSupportAgent)
     assert client.get("/health").json()["llm_configured"] is True
+
+
+def test_cors_allows_configured_frontend_origin(make_client):
+    client = make_client(cors_origins="http://localhost:5173, http://example.com")
+
+    response = client.options(
+        "/chat",
+        headers={
+            "Origin": "http://example.com",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://example.com"
+
+
+def test_cors_rejects_unknown_origin(make_client):
+    response = make_client().options(
+        "/chat",
+        headers={"Origin": "http://evil.example", "Access-Control-Request-Method": "POST"},
+    )
+
+    assert "access-control-allow-origin" not in response.headers

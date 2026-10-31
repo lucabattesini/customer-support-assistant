@@ -5,11 +5,21 @@ services:
       - path: ./back-end/.env
         required: false
     environment:
-      DATABASE_URL: ${DOCKER_DATABASE_URL:-sqlite:////app/data/app.db}
+      DATABASE_URL: ${DOCKER_DATABASE_URL:?Set DOCKER_DATABASE_URL in the root .env}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:?Set BACKEND_PORT in the root .env}:8000"
     volumes:
       - backend-data:/app/data
+
+  frontend:
+    build:
+      context: ./front-end
+      args:
+        VITE_API_URL: ${FRONTEND_API_URL:?Set FRONTEND_API_URL in the root .env}
+    ports:
+      - "${FRONTEND_PORT:?Set FRONTEND_PORT in the root .env}:80"
+    depends_on:
+      - backend
 
 volumes:
   backend-data:

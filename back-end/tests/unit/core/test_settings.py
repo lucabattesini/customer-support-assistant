@@ -1,19 +1,28 @@
 from datetime import date
-from pathlib import Path
 
-from app.core.settings import BASE_DIR, Settings
+import pytest
+from pydantic import ValidationError
+
+from app.core.settings import Settings
+
+LLM_SETTINGS = {
+    "llm_base_url": "https://llm.example/api",
+    "openrouter_api_key": "key",
+    "llm_model": "model",
+}
 
 
 def build_settings(**overrides: object) -> Settings:
-    return Settings(_env_file=None, **overrides)
+    values = {"database_url": "sqlite://", **overrides}
+    return Settings(_env_file=None, **values)
 
 
 def test_empty_values_are_treated_as_unset():
-    settings = build_settings(reference_date="", database_url="", openrouter_api_key=" ")
+    settings = build_settings(reference_date="", openrouter_api_key=" ", llm_base_url="")
 
     assert settings.reference_date is None
-    assert settings.database_url is None
     assert settings.openrouter_api_key is None
+    assert settings.llm_base_url is None
 
 
 def test_reference_date_is_parsed():
@@ -22,18 +31,18 @@ def test_reference_date_is_parsed():
     assert settings.reference_date == date(2026, 3, 25)
 
 
-def test_default_database_url_is_absolute_sqlite_file():
-    settings = build_settings()
+@pytest.mark.parametrize("database_url", [None, ""])
+def test_database_url_is_required(database_url):
+    values = {} if database_url is None else {"database_url": database_url}
 
-    expected_path = (BASE_DIR / "data" / "app.db").as_posix()
-    assert settings.resolved_database_url == f"sqlite:///{expected_path}"
-    assert Path(expected_path).is_absolute()
+    with pytest.raises(ValidationError, match="database_url"):
+        Settings(_env_file=None, **values)
 
 
-def test_explicit_database_url_is_kept():
-    settings = build_settings(database_url="sqlite://")
-
-    assert settings.resolved_database_url == "sqlite://"
+def test_database_url_is_used_as_given():
+    assert (
+        build_settings(database_url="sqlite:///tmp/app.db").database_url == "sqlite:///tmp/app.db"
+    )
 
 
 def test_paths_do_not_depend_on_working_directory():
@@ -44,7 +53,22 @@ def test_paths_do_not_depend_on_working_directory():
     assert settings.prompts_dir.is_absolute()
 
 
-def test_llm_configured_requires_key_and_model():
-    assert not build_settings(openrouter_api_key="key").llm_configured
-    assert not build_settings(llm_model="model").llm_configured
-    assert build_settings(openrouter_api_key="key", llm_model="model").llm_configured
+@pytest.mark.parametrize("missing", ["llm_base_url", "openrouter_api_key", "llm_model"])
+def test_llm_configured_requires_url_key_and_model(missing):
+    values = {key: value for key, value in LLM_SETTINGS.items() if key != missing}
+
+    assert not build_settings(**values).llm_configured
+
+
+def test_llm_configured_when_everything_is_set():
+    assert build_settings(**LLM_SETTINGS).llm_configured
+
+
+def test_cors_allows_no_origin_by_default():
+    assert build_settings().cors_origin_list == []
+
+
+def test_cors_origins_are_split_and_trimmed():
+    settings = build_settings(cors_origins=" http://a.test ,http://b.test,, ")
+
+    assert settings.cors_origin_list == ["http://a.test", "http://b.test"]
