@@ -1,11 +1,11 @@
-import openai
+from collections.abc import Callable
+
+from langchain.agents.middleware import AgentMiddleware, ModelRequest, ModelResponse
 from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 
-from app.agents.shared.errors import LLMNotConfiguredError
+from app.agents.shared.errors import LLMNotConfiguredError, LLMUnavailableError
 from app.core.settings import Settings
-
-PROVIDER_ERRORS: tuple[type[Exception], ...] = (openai.OpenAIError,)
 
 
 def build_chat_model(settings: Settings) -> BaseChatModel:
@@ -23,3 +23,23 @@ def build_chat_model(settings: Settings) -> BaseChatModel:
         timeout=settings.llm_timeout_seconds,
         max_retries=settings.llm_max_retries,
     )
+
+
+class ProviderErrorMiddleware(AgentMiddleware):
+    """Turns any failure of the model call into `LLMUnavailableError`.
+
+    Providers fail in several shapes: HTTP errors, timeouts, and error bodies returned with
+    HTTP 200 that the client library surfaces as `ValueError` or `TypeError`. Only the model
+    call is wrapped, so bugs in tools or in the graph are not disguised as provider outages.
+    """
+
+    def wrap_model_call(
+        self,
+        request: ModelRequest,
+        handler: Callable[[ModelRequest], ModelResponse],
+    ) -> ModelResponse:
+        """Call the model, translating provider failures."""
+        try:
+            return handler(request)
+        except Exception as error:
+            raise LLMUnavailableError(f"{type(error).__name__}: {error}") from error

@@ -29,8 +29,10 @@ class ScriptedModel(GenericFakeChatModel):
 
 
 class FailingModel(ScriptedModel):
+    error: Exception
+
     def _generate(self, messages, stop=None, run_manager=None, **kwargs):
-        raise openai.APIConnectionError(request=httpx.Request("POST", "https://example.com"))
+        raise self.error
 
 
 def tool_call(name, args, call_id="call_1"):
@@ -122,8 +124,33 @@ def test_step_limit_raises_domain_error(tools):
         agent.reply("thread-1", "Loop forever")
 
 
-def test_provider_failure_raises_unavailable_error(tools):
-    agent = build_agent(FailingModel(messages=iter([]), received=[]), tools)
+@pytest.mark.parametrize(
+    "error",
+    [
+        openai.APIConnectionError(request=httpx.Request("POST", "https://example.com")),
+        ValueError("provider returned an error body with HTTP 200"),
+        TypeError("'NoneType' object is not iterable"),
+    ],
+)
+def test_provider_failures_raise_unavailable_error(tools, error):
+    agent = build_agent(FailingModel(messages=iter([]), received=[], error=error), tools)
 
     with pytest.raises(LLMUnavailableError):
         agent.reply("thread-1", "Hello")
+
+
+def test_tool_bugs_are_not_reported_as_provider_failures(tools, monkeypatch):
+    model = ScriptedModel(
+        messages=iter([tool_call("get_policy", {"section": "payment"}), AIMessage(content="ok")]),
+        received=[],
+    )
+    agent = build_agent(model, tools)
+
+    def broken_get(self, section):
+        raise RuntimeError("bug")
+
+    monkeypatch.setattr("app.services.policy_service.PolicyService.get", broken_get)
+
+    assert agent.reply("thread-1", "How can I pay?") == "ok"
+    tool_result = next(m for m in model.received[-1] if isinstance(m, ToolMessage))
+    assert '"internal_error"' in tool_result.content

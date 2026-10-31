@@ -6,9 +6,9 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import BaseTool
 from langgraph.types import Checkpointer
 
-from app.agents.shared.errors import AgentStepLimitError, LLMUnavailableError
+from app.agents.shared.errors import AgentStepLimitError
 from app.agents.shared.history import HistoryTrimmingMiddleware
-from app.agents.shared.llm import PROVIDER_ERRORS
+from app.agents.shared.llm import ProviderErrorMiddleware
 
 AGENT_NAME = "customer_support"
 
@@ -32,6 +32,7 @@ class CustomerSupportAgent:
             system_prompt=system_prompt,
             middleware=[
                 HistoryTrimmingMiddleware(max_turns),
+                ProviderErrorMiddleware(),
                 ModelCallLimitMiddleware(run_limit=max_steps, exit_behavior="error"),
             ],
             checkpointer=checkpointer,
@@ -59,8 +60,6 @@ class CustomerSupportAgent:
             )
         except ModelCallLimitExceededError as error:
             raise AgentStepLimitError(str(error)) from error
-        except PROVIDER_ERRORS as error:
-            raise LLMUnavailableError(str(error)) from error
         return _last_answer(result["messages"])
 
 
