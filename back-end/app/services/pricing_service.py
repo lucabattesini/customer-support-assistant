@@ -74,6 +74,14 @@ class PricingService:
             for product in products
         }
 
+    def inactive_promotions(self, product: Product) -> list[Promotion]:
+        """Promotions of a product that are no longer valid, to answer about expired offers."""
+        return [
+            promotion
+            for promotion in self._promotions.list_for_product(product.product_id)
+            if not promotion.is_active
+        ]
+
     def max_installments(self, amount: Decimal) -> int:
         """Largest number of installments allowed for an amount (at least one)."""
         allowed = [

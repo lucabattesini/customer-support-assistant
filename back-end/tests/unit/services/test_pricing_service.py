@@ -19,13 +19,13 @@ def make_product(product_id, price):
     )
 
 
-def make_promotion(promotion_id, product_id, percent, label="Sale"):
+def make_promotion(promotion_id, product_id, percent, label="Sale", active=True):
     return Promotion(
         promotion_id=promotion_id,
         product_id=product_id,
         discount_percent=percent,
         description=label,
-        is_active=True,
+        is_active=active,
     )
 
 
@@ -36,7 +36,14 @@ class FakePromotionRepository:
 
     def list_active(self, product_ids=None):
         self.calls += 1
-        return [p for p in self._promotions if product_ids is None or p.product_id in product_ids]
+        return [
+            p
+            for p in self._promotions
+            if p.is_active and (product_ids is None or p.product_id in product_ids)
+        ]
+
+    def list_for_product(self, product_id):
+        return [p for p in self._promotions if p.product_id == product_id]
 
 
 @pytest.fixture
@@ -115,3 +122,17 @@ def test_quote_many_uses_a_single_lookup(store_config):
     assert repository.calls == 1
     assert quotes[1].pix_price == Decimal("95.00")
     assert quotes[2].promotion.price == Decimal("180.00")
+
+
+def test_inactive_promotions_are_listed_separately(make_service):
+    promotions = [
+        make_promotion(1, 1, 12, "Black Friday", active=False),
+        make_promotion(2, 1, 5, "Current", active=True),
+        make_promotion(3, 2, 30, "Other product", active=False),
+    ]
+    service = make_service(promotions)
+
+    expired = service.inactive_promotions(make_product(1, "2199"))
+
+    assert [promotion.description for promotion in expired] == ["Black Friday"]
+    assert service.quote(make_product(1, "2199")).promotion.discount_percent == 5
