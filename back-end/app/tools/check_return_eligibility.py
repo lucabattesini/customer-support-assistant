@@ -26,6 +26,7 @@ def check_return_eligibility(
             "reason": result.reason.value,
             "eligible": result.eligible,
             "blocking_status": result.blocking_status.value if result.blocking_status else None,
+            "receipt_date_unknown": result.receipt_date_unknown or None,
             "deadline": result.deadline.isoformat() if result.deadline else None,
             "days_remaining": result.days_remaining,
             "days_exceeded": result.days_exceeded,
