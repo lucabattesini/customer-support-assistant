@@ -1,7 +1,9 @@
+from typing import Annotated
+
 from pydantic import BaseModel, Field
 
 from app.domain.enums import HandoffType
-from app.tools.base import Payload, ToolContext, ToolSpec
+from app.tools.base import Payload, ToolContext, ToolSpec, enum_schema
 
 MAX_SUMMARY_LENGTH = 500
 
@@ -9,7 +11,7 @@ MAX_SUMMARY_LENGTH = 500
 class HandoffToHumanInput(BaseModel):
     """Arguments of `handoff_to_human`."""
 
-    case_type: HandoffType
+    case_type: Annotated[HandoffType, enum_schema(HandoffType)]
     summary: str = Field(min_length=1, max_length=MAX_SUMMARY_LENGTH)
     contact: str | None = Field(default=None, max_length=200)
     order_id: int | None = Field(default=None, ge=1)

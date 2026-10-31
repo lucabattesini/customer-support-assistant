@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from langchain_core.utils.function_calling import convert_to_openai_tool
 from pydantic import BaseModel
 
 from app.agents.shared.prompt_builder import PromptBuilder
@@ -98,3 +99,27 @@ def test_invalid_arguments_return_error_instead_of_raising(
 
     assert payload["error"] == "invalid_arguments"
     assert field in {item["field"] for item in payload["fields"]}
+
+
+def _schema_descriptions(node):
+    if isinstance(node, dict):
+        found = [node["description"]] if "description" in node else []
+        return found + [text for value in node.values() for text in _schema_descriptions(value)]
+    if isinstance(node, list):
+        return [text for value in node for text in _schema_descriptions(value)]
+    return []
+
+
+def test_tool_schemas_carry_no_text_from_python_code(context, prompts):
+    for tool in build_tools(context, prompts.tool_description):
+        parameters = convert_to_openai_tool(tool)["function"]["parameters"]
+
+        assert _schema_descriptions(parameters) == [], tool.name
+
+
+def test_enum_fields_still_list_allowed_values(context, prompts):
+    tool = next(t for t in build_tools(context, prompts.tool_description) if t.name == "get_policy")
+
+    section = convert_to_openai_tool(tool)["function"]["parameters"]["properties"]["section"]
+
+    assert "returns_exchanges" in section["enum"]

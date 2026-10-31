@@ -3,9 +3,10 @@ import logging
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, WithJsonSchema
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.clock import Clock
@@ -41,6 +42,15 @@ class ToolSpec[InputT: BaseModel]:
     name: str
     input_model: type[InputT]
     handler: Callable[[ToolContext, InputT], Payload]
+
+
+def enum_schema(enum_type: type[StrEnum]) -> WithJsonSchema:
+    """JSON schema listing only the enum values.
+
+    Without it Pydantic copies the enum docstring into the schema sent to the model,
+    and LLM-facing text must come only from the prompts folder.
+    """
+    return WithJsonSchema({"type": "string", "enum": [member.value for member in enum_type]})
 
 
 def execute_tool[InputT: BaseModel](

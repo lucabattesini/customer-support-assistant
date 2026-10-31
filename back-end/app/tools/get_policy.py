@@ -1,13 +1,15 @@
+from typing import Annotated
+
 from pydantic import BaseModel
 
 from app.domain.enums import PolicySectionKey
-from app.tools.base import Payload, ToolContext, ToolSpec
+from app.tools.base import Payload, ToolContext, ToolSpec, enum_schema
 
 
 class GetPolicyInput(BaseModel):
     """Arguments of `get_policy`."""
 
-    section: PolicySectionKey
+    section: Annotated[PolicySectionKey, enum_schema(PolicySectionKey)]
 
 
 def get_policy(context: ToolContext, arguments: GetPolicyInput) -> Payload:

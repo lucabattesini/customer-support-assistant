@@ -1,12 +1,14 @@
+from typing import Annotated
+
 from app.domain.enums import ReturnReason
-from app.tools.base import Payload, ToolContext, ToolSpec, without_none
+from app.tools.base import Payload, ToolContext, ToolSpec, enum_schema, without_none
 from app.tools.get_order_status import OrderLookupInput
 
 
 class CheckReturnEligibilityInput(OrderLookupInput):
     """Order lookup arguments plus the reason for the return or exchange."""
 
-    reason: ReturnReason
+    reason: Annotated[ReturnReason, enum_schema(ReturnReason)]
 
 
 def check_return_eligibility(
