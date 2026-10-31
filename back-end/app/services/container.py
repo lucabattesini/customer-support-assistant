@@ -21,8 +21,10 @@ class ServiceContainer:
     """Services wired to repositories that share a single database session."""
 
     def __init__(self, session: Session, config: StoreConfig) -> None:
-        self.catalog = CatalogService(ProductRepository(session), CategoryRepository(session))
         self.pricing = PricingService(PromotionRepository(session), config.pricing)
+        self.catalog = CatalogService(
+            ProductRepository(session), CategoryRepository(session), self.pricing
+        )
         self.orders = OrderService(OrderRepository(session), CustomerRepository(session))
         self.returns = ReturnsService(config.returns)
         self.store_hours = StoreHoursService(config)

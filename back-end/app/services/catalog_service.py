@@ -14,6 +14,7 @@ from app.domain.errors import (
 from app.domain.models import Category, Product
 from app.repositories.category_repository import CategoryRepository
 from app.repositories.product_repository import ProductRepository
+from app.services.pricing_service import PriceQuote, PricingService
 
 CATEGORY_MIN_SCORE = 90
 SEARCH_MIN_SCORE = 60
@@ -25,18 +26,25 @@ MAX_CANDIDATES = 5
 
 @dataclass(frozen=True)
 class SearchResult:
-    """Page of products found by a catalog search."""
+    """Page of products found by a catalog search, with their price quotes."""
 
     products: list[Product]
     total_found: int
+    quotes: dict[int, PriceQuote]
 
 
 class CatalogService:
     """Product search, product identification and alternative suggestions."""
 
-    def __init__(self, products: ProductRepository, categories: CategoryRepository) -> None:
+    def __init__(
+        self,
+        products: ProductRepository,
+        categories: CategoryRepository,
+        pricing: PricingService,
+    ) -> None:
         self._products = products
         self._categories = categories
+        self._pricing = pricing
 
     def search(
         self,
@@ -50,19 +58,21 @@ class CatalogService:
     ) -> SearchResult:
         """Search the catalog by free text and filters.
 
-        Without a text query results are ordered by price; with a query they are ordered by
-        relevance and products below the relevance threshold are dropped.
+        Price filters and ordering use the price the customer pays: the promotional price
+        when a promotion is active, otherwise the list price. Without a text query results
+        are ordered by that price; with a query they are ordered by relevance and products
+        below the relevance threshold are dropped.
 
         Args:
             query: Free text such as brand or model.
             category: Category name as written by the customer.
-            min_price: Minimum list price, inclusive.
-            max_price: Maximum list price, inclusive.
+            min_price: Minimum price paid, inclusive.
+            max_price: Maximum price paid, inclusive.
             only_available: Keep only active products with stock.
             limit: Maximum number of products returned.
 
         Returns:
-            The first `limit` products and the total number of matches.
+            The first `limit` products, the total number of matches and their price quotes.
 
         Raises:
             InvalidPriceRangeError: When `min_price` is greater than `max_price`.
@@ -73,17 +83,28 @@ class CatalogService:
 
         candidates = self._products.list_by_filters(
             category_ids=self._resolve_category_ids(category) if category else None,
-            min_price=min_price,
-            max_price=max_price,
             statuses=[ProductStatus.ACTIVE] if only_available else None,
             in_stock=True if only_available else None,
         )
+        quotes = self._pricing.quote_many(candidates)
+        in_range = [
+            product
+            for product in candidates
+            if _within(quotes[product.product_id].final_price, min_price, max_price)
+        ]
         if query and normalize_text(query):
-            ranked = self._rank(query, candidates, SEARCH_MIN_SCORE)
-            matches = [product for product, _ in ranked]
+            matches = [product for product, _ in self._rank(query, in_range, SEARCH_MIN_SCORE)]
         else:
-            matches = sorted(candidates, key=lambda product: (product.price_brl, product.name))
-        return SearchResult(products=matches[:limit], total_found=len(matches))
+            matches = sorted(
+                in_range,
+                key=lambda product: (quotes[product.product_id].final_price, product.name),
+            )
+        page = matches[:limit]
+        return SearchResult(
+            products=page,
+            total_found=len(matches),
+            quotes={product.product_id: quotes[product.product_id] for product in page},
+        )
 
     def find_product(self, reference: str) -> Product:
         """Identify a single product from an id or a name written by the customer.
@@ -158,6 +179,10 @@ def _relevance(query: str, product: Product) -> float:
     if len(compact_query) < COMPACT_MATCH_MIN_LENGTH:
         return token_score
     return max(token_score, fuzz.partial_ratio(compact_query, compact_text(product.name)))
+
+
+def _within(price: Decimal, minimum: Decimal | None, maximum: Decimal | None) -> bool:
+    return (minimum is None or price >= minimum) and (maximum is None or price <= maximum)
 
 
 def _names(categories: list[Category]) -> list[str]:

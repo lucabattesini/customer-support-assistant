@@ -9,8 +9,9 @@ from app.domain.errors import (
     ProductNotFoundError,
     UnknownCategoryError,
 )
-from app.domain.models import Category, Product
+from app.domain.models import Category, Product, Promotion
 from app.services.catalog_service import CatalogService
+from app.services.pricing_service import PricingService
 
 CATEGORIES = [
     Category(category_id=1, name="Violões"),
@@ -75,9 +76,20 @@ class FakeCategoryRepository:
         return list(CATEGORIES)
 
 
+PROMOTIONS = [
+    Promotion(promotion_id=1, product_id=1, discount_percent=60, description="Sale", is_active=True)
+]
+
+
+class FakePromotionRepository:
+    def list_active(self, product_ids=None):
+        return [p for p in PROMOTIONS if product_ids is None or p.product_id in product_ids]
+
+
 @pytest.fixture
-def catalog():
-    return CatalogService(FakeProductRepository(PRODUCTS), FakeCategoryRepository())
+def catalog(store_config):
+    pricing = PricingService(FakePromotionRepository(), store_config.pricing)
+    return CatalogService(FakeProductRepository(PRODUCTS), FakeCategoryRepository(), pricing)
 
 
 def ids(products):
@@ -85,16 +97,29 @@ def ids(products):
 
 
 def test_search_by_category_without_accent_and_max_price(catalog):
-    result = catalog.search(category="violao", max_price=Decimal("1000"))
+    result = catalog.search(category="violao", max_price=Decimal("850"))
 
     assert ids(result.products) == [3, 4]
     assert result.total_found == 2
 
 
+def test_price_filter_uses_promotional_price(catalog):
+    result = catalog.search(category="violao", max_price=Decimal("1000"))
+
+    assert ids(result.products) == [3, 4, 1]
+    assert result.quotes[1].final_price == Decimal("879.60")
+
+
+def test_search_returns_quotes_only_for_returned_page(catalog):
+    result = catalog.search(category="violoes", limit=2)
+
+    assert set(result.quotes) == set(ids(result.products))
+
+
 def test_search_without_query_is_ordered_by_price(catalog):
     result = catalog.search(category="violões", limit=10)
 
-    prices = [product.price_brl for product in result.products]
+    prices = [result.quotes[product.product_id].final_price for product in result.products]
     assert prices == sorted(prices)
 
 

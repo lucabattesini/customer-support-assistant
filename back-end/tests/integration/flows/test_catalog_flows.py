@@ -92,3 +92,10 @@ def test_ambiguous_product_returns_priced_candidates(call_tool):
 
 def test_unknown_product(call_tool):
     assert call_tool("get_product_details", {"product": "theremin"})["error"] == "product_not_found"
+
+
+def test_price_filter_includes_products_cheaper_under_promotion(call_tool):
+    payload = call_tool("search_products", {"max_price": 750})
+
+    assert 102 in ids(payload)
+    assert payload["products"][-1]["promotional_price"] == "R$ 719,20"

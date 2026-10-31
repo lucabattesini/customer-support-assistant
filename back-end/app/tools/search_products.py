@@ -29,10 +29,9 @@ def search_products(context: ToolContext, arguments: SearchProductsInput) -> Pay
             only_available=arguments.only_available,
             limit=arguments.limit,
         )
-        quotes = services.pricing.quote_many(result.products)
     return {
         "products": [
-            product_summary(product, quotes[product.product_id], locale)
+            product_summary(product, result.quotes[product.product_id], locale)
             for product in result.products
         ],
         "total_found": result.total_found,
