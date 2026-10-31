@@ -1,0 +1,13 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.env
+*.db
+back-end/data/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/
