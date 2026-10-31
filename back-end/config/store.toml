@@ -1,0 +1,45 @@
+[store]
+name = "Empório da Música"
+tagline = "Sua música começa aqui."
+address = "Rua 14 de Maio, 3200 — Centro, Campo Grande - MS, 79202-333"
+city = "Campo Grande"
+phone = "(67) 3341-4444"
+email = "contato@emporiodamusica.com.br"
+
+[locale]
+timezone = "America/Campo_Grande"
+currency_symbol = "R$"
+decimal_separator = ","
+thousands_separator = "."
+
+[business_hours]
+monday = { opens = 09:00:00, closes = 18:00:00 }
+tuesday = { opens = 09:00:00, closes = 18:00:00 }
+wednesday = { opens = 09:00:00, closes = 18:00:00 }
+thursday = { opens = 09:00:00, closes = 18:00:00 }
+friday = { opens = 09:00:00, closes = 18:00:00 }
+saturday = { opens = 09:00:00, closes = 13:00:00 }
+
+[pricing]
+pix_discount_percent = 5
+
+[[pricing.installment_tiers]]
+max_installments = 3
+min_installment_value = 50.00
+
+[[pricing.installment_tiers]]
+max_installments = 6
+min_installment_value = 80.00
+
+[[pricing.installment_tiers]]
+max_installments = 12
+min_installment_value = 100.00
+
+[returns]
+regret_days = 7
+preference_days = 7
+defect_days = 30
+legal_warranty_days = 90
+
+[handoff]
+response_time_hours = 24
