@@ -25,3 +25,8 @@ class ProductModel(Base):
     created_at: Mapped[date | None]
 
     category: Mapped[CategoryModel] = relationship()
+
+    @property
+    def category_name(self) -> str:
+        """Name of the product category."""
+        return self.category.name

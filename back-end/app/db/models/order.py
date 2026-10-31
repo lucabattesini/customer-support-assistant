@@ -20,6 +20,11 @@ class OrderItemModel(Base):
 
     product: Mapped[ProductModel] = relationship()
 
+    @property
+    def product_name(self) -> str:
+        """Name of the ordered product."""
+        return self.product.name
+
 
 class OrderModel(Base):
     """Customer order."""
