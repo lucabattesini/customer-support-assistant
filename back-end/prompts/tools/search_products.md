@@ -1,4 +1,5 @@
 Search the store catalog by free text and filters. Use it when the customer looks for instruments, asks for options or recommendations, or needs alternatives.
 Put instrument types in `category` (for example "acoustic guitar", "ukulele", "keyboard"), written as the customer wrote them, and brands or models in `query`. Fill only the filters the customer mentioned; do not ask for optional ones.
 Returns up to `limit` products with price, promotional price when a promotion is active, and availability. For final price, PIX price, installments or details of one product, call `get_product_details`.
+`total_found` is the number of products matching the filters. When it is greater than the number of products returned, tell the customer how many options exist and offer to show more (call again with a higher `limit`, up to 10) or to narrow the search, for example by string type, style or price range.
 Errors: `unknown_category` lists the available categories to offer; `invalid_price_range` means the customer should confirm the price range.
