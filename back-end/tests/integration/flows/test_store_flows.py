@@ -50,7 +50,7 @@ def test_handoff_is_persisted_and_returns_protocol(call_tool, session_factory):
     )
 
     assert re.fullmatch(r"HD-20260325-[0-9A-F]{8}", payload["protocol"])
-    assert payload["response_time_hours"] == 24
+    assert payload["response_time_business_hours"] == 24
     with session_scope(session_factory) as session:
         stored = HandoffRepository(session).get_by_protocol(payload["protocol"])
     assert stored.summary == "Order 3 arrived damaged"
