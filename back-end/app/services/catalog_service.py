@@ -54,6 +54,7 @@ class CatalogService:
         min_price: Decimal | None = None,
         max_price: Decimal | None = None,
         only_available: bool = True,
+        on_sale: bool = False,
         limit: int = 5,
     ) -> SearchResult:
         """Search the catalog by free text and filters.
@@ -69,6 +70,7 @@ class CatalogService:
             min_price: Minimum price paid, inclusive.
             max_price: Maximum price paid, inclusive.
             only_available: Keep only active products with stock.
+            on_sale: Keep only products with an active promotion.
             limit: Maximum number of products returned.
 
         Returns:
@@ -91,6 +93,7 @@ class CatalogService:
             product
             for product in candidates
             if _within(quotes[product.product_id].final_price, min_price, max_price)
+            and (not on_sale or quotes[product.product_id].promotion is not None)
         ]
         if query and normalize_text(query):
             matches = [product for product, _ in self._rank(query, in_range, SEARCH_MIN_SCORE)]

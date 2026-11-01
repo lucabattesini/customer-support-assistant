@@ -136,6 +136,13 @@ def test_search_can_include_unavailable_products(catalog):
     assert {7, 8} <= set(ids(result.products))
 
 
+def test_search_on_sale_keeps_only_products_with_active_promotion(catalog):
+    result = catalog.search(on_sale=True, limit=10)
+
+    assert ids(result.products) == [1]
+    assert result.total_found == 1
+
+
 def test_search_respects_limit_but_reports_total(catalog):
     result = catalog.search(category="violoes", limit=2)
 
