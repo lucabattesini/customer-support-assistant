@@ -58,6 +58,7 @@ def test_regret_within_window_is_eligible(call_tool):
         "days_remaining": 2,
         "based_on_estimated_delivery": True,
         "legal_warranty_until": "2026-06-18",
+        "legal_warranty_active": True,
     }
 
 

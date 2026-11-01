@@ -34,6 +34,7 @@ def check_return_eligibility(
             "legal_warranty_until": (
                 result.legal_warranty_until.isoformat() if result.legal_warranty_until else None
             ),
+            "legal_warranty_active": result.legal_warranty_active,
         }
     )
 

@@ -28,6 +28,7 @@ class ReturnEligibility:
     days_exceeded: int | None = None
     based_on_estimated_delivery: bool = False
     legal_warranty_until: date | None = None
+    legal_warranty_active: bool | None = None
 
 
 class ReturnsService:
@@ -76,6 +77,7 @@ class ReturnsService:
             days_exceeded=None if eligible else (today - deadline).days,
             based_on_estimated_delivery=received_on is not None,
             legal_warranty_until=legal_warranty_until,
+            legal_warranty_active=(today <= legal_warranty_until if legal_warranty_until else None),
         )
 
     def _window(

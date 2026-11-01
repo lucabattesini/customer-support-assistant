@@ -67,6 +67,17 @@ def test_receipt_is_based_on_estimated_delivery(service):
     assert result.legal_warranty_until == date(2026, 6, 8)
 
 
+@pytest.mark.parametrize(
+    ("today", "active"),
+    [(date(2026, 6, 8), True), (date(2026, 6, 9), False)],
+)
+def test_reports_whether_legal_warranty_is_still_active(service, today, active):
+    result = service.check(make_order(), ReturnReason.REGRET, today)
+
+    assert result.eligible is False
+    assert result.legal_warranty_active is active
+
+
 @pytest.mark.parametrize("reason", [ReturnReason.REGRET, ReturnReason.PREFERENCE])
 def test_unknown_receipt_date_leaves_receipt_windows_undetermined(service, reason):
     result = service.check(make_order(estimated_delivery=None), reason, date(2026, 3, 5))
