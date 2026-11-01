@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -41,10 +42,12 @@ class CatalogService:
         products: ProductRepository,
         categories: CategoryRepository,
         pricing: PricingService,
+        similarity_specs: Sequence[str] = (),
     ) -> None:
         self._products = products
         self._categories = categories
         self._pricing = pricing
+        self._similarity_specs = tuple(similarity_specs)
 
     def search(
         self,
@@ -143,15 +146,32 @@ class CatalogService:
         return best_product
 
     def alternatives(self, product: Product, limit: int = 3) -> list[Product]:
-        """Available products of the same category with the closest prices."""
+        """Available products of the same category, most similar first.
+
+        Products are compared on the configured similarity specs in priority order: sharing
+        the first spec outweighs sharing any of the following ones. Ties are broken by the
+        closest price.
+        """
         options = self._products.list_by_filters(
             category_ids=[product.category_id],
             statuses=[ProductStatus.ACTIVE],
             in_stock=True,
         )
         others = [option for option in options if option.product_id != product.product_id]
-        others.sort(key=lambda option: (abs(option.price_brl - product.price_brl), option.name))
+        others.sort(
+            key=lambda option: (
+                self._dissimilarity(product, option),
+                abs(option.price_brl - product.price_brl),
+                option.name,
+            )
+        )
         return others[:limit]
+
+    def _dissimilarity(self, product: Product, option: Product) -> tuple[bool, ...]:
+        return tuple(
+            key in product.specs and product.specs[key] != option.specs.get(key)
+            for key in self._similarity_specs
+        )
 
     def _resolve_category_ids(self, category: str) -> list[int]:
         term = normalize_text(category)

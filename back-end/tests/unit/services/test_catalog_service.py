@@ -21,7 +21,9 @@ CATEGORIES = [
 CATEGORY_NAMES = {category.category_id: category.name for category in CATEGORIES}
 
 
-def make_product(product_id, name, category_id, price, stock=5, status=ProductStatus.ACTIVE):
+def make_product(
+    product_id, name, category_id, price, stock=5, status=ProductStatus.ACTIVE, specs=None
+):
     return Product(
         product_id=product_id,
         name=name,
@@ -30,6 +32,7 @@ def make_product(product_id, name, category_id, price, stock=5, status=ProductSt
         price_brl=Decimal(price),
         stock_quantity=stock,
         status=status,
+        specs=specs or {},
     )
 
 
@@ -222,3 +225,24 @@ def test_alternatives_are_available_same_category_closest_price(catalog):
     alternatives = catalog.alternatives(out_of_stock, limit=2)
 
     assert ids(alternatives) == [4, 3]
+
+
+def test_alternatives_prefer_products_sharing_similarity_specs(store_config):
+    steel, nylon = {"strings": "steel", "electronics": "no"}, {"strings": "nylon"}
+    products = [
+        make_product(20, "Steel Dreadnought", 1, "800", stock=0, specs=steel),
+        make_product(21, "Nylon Close Price", 1, "799", specs={**nylon, "electronics": "no"}),
+        make_product(22, "Steel Far Price", 1, "1200", specs=steel),
+        make_product(23, "Steel Electric", 1, "810", specs={**steel, "electronics": "yes"}),
+    ]
+    pricing = PricingService(FakePromotionRepository(), store_config.pricing)
+    catalog = CatalogService(
+        FakeProductRepository(products),
+        FakeCategoryRepository(),
+        pricing,
+        similarity_specs=["strings", "electronics"],
+    )
+
+    alternatives = catalog.alternatives(products[0])
+
+    assert ids(alternatives) == [22, 23, 21]
