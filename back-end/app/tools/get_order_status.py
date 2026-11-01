@@ -41,6 +41,7 @@ def order_payload(order: Order, context: ToolContext) -> Payload:
                 order.estimated_delivery.isoformat() if order.estimated_delivery else None
             ),
             "cancellation_reason": order.notes if cancelled else None,
+            "delivery_overdue": order.is_delivery_overdue(context.clock.today()) or None,
         }
     )
 
