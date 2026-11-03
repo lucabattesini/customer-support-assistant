@@ -1,4 +1,3 @@
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import PolicySectionModel
@@ -16,10 +15,3 @@ class PolicyRepository:
         """Return a policy section, or None when it has no content yet."""
         model = self._session.get(PolicySectionModel, section.value)
         return PolicySection.model_validate(model) if model else None
-
-    def list_sections(self) -> list[PolicySection]:
-        """Return all stored policy sections ordered by key."""
-        models = self._session.scalars(
-            select(PolicySectionModel).order_by(PolicySectionModel.section)
-        )
-        return [PolicySection.model_validate(model) for model in models]

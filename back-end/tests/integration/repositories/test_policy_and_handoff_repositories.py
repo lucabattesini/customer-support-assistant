@@ -2,10 +2,10 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import pytest
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 
-from app.db.models import PolicySectionModel
+from app.db.models import HandoffModel, PolicySectionModel
 from app.db.session import session_scope
 from app.domain.enums import HandoffType, PolicySectionKey
 from app.repositories.handoff_repository import HandoffRepository
@@ -32,12 +32,6 @@ def test_get_section_returns_policy(session):
     assert section.title == "Returns and exchanges"
 
 
-def test_list_sections_covers_every_key(session):
-    keys = {section.section for section in PolicyRepository(session).list_sections()}
-
-    assert keys == set(PolicySectionKey)
-
-
 def test_get_section_returns_none_when_missing(session_factory):
     with session_scope(session_factory) as session:
         session.execute(delete(PolicySectionModel).where(PolicySectionModel.section == "privacy"))
@@ -52,14 +46,14 @@ def test_create_handoff_returns_generated_id(session):
     assert handoff.type is HandoffType.COMPLAINT
 
 
-def test_get_by_protocol_finds_created_handoff(session_factory):
+def test_created_handoff_is_persisted(session_factory):
     with session_scope(session_factory) as session:
         create_handoff(HandoffRepository(session), protocol="HD-42")
     with session_scope(session_factory) as session:
-        handoff = HandoffRepository(session).get_by_protocol("HD-42")
+        stored = session.scalar(select(HandoffModel).where(HandoffModel.protocol == "HD-42"))
 
-    assert handoff.summary == "Late delivery"
-    assert handoff.order_id == 3
+    assert stored.summary == "Late delivery"
+    assert stored.order_id == 3
 
 
 def test_protocol_is_unique(session_factory):

@@ -1,5 +1,4 @@
 from collections.abc import Collection
-from decimal import Decimal
 
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session, joinedload
@@ -30,8 +29,6 @@ class ProductRepository:
         self,
         *,
         category_ids: Collection[int] | None = None,
-        min_price: Decimal | None = None,
-        max_price: Decimal | None = None,
         statuses: Collection[ProductStatus] | None = None,
         in_stock: bool | None = None,
     ) -> list[Product]:
@@ -39,8 +36,6 @@ class ProductRepository:
 
         Args:
             category_ids: Restrict to these categories.
-            min_price: Minimum list price, inclusive.
-            max_price: Maximum list price, inclusive.
             statuses: Restrict to these catalog statuses.
             in_stock: When True only products with stock, when False only without stock.
 
@@ -50,10 +45,6 @@ class ProductRepository:
         query = self._base_query()
         if category_ids is not None:
             query = query.where(ProductModel.category_id.in_(category_ids))
-        if min_price is not None:
-            query = query.where(ProductModel.price_brl >= min_price)
-        if max_price is not None:
-            query = query.where(ProductModel.price_brl <= max_price)
         if statuses is not None:
             query = query.where(ProductModel.status.in_([status.value for status in statuses]))
         if in_stock is True:

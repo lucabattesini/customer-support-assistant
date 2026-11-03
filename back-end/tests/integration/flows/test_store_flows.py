@@ -1,10 +1,9 @@
 import re
 
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 
-from app.db.models import PolicySectionModel
+from app.db.models import HandoffModel, PolicySectionModel
 from app.db.session import session_scope
-from app.repositories.handoff_repository import HandoffRepository
 
 
 def test_policy_section_is_returned(call_tool):
@@ -52,6 +51,8 @@ def test_handoff_is_persisted_and_returns_protocol(call_tool, session_factory):
     assert re.fullmatch(r"HD-20260325-[0-9A-F]{8}", payload["protocol"])
     assert payload["response_time_business_hours"] == 24
     with session_scope(session_factory) as session:
-        stored = HandoffRepository(session).get_by_protocol(payload["protocol"])
+        stored = session.scalar(
+            select(HandoffModel).where(HandoffModel.protocol == payload["protocol"])
+        )
     assert stored.summary == "Order 3 arrived damaged"
     assert stored.order_id == 3

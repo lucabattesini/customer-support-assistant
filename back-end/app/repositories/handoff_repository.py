@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import HandoffModel
@@ -36,8 +35,3 @@ class HandoffRepository:
         self._session.add(model)
         self._session.flush()
         return Handoff.model_validate(model)
-
-    def get_by_protocol(self, protocol: str) -> Handoff | None:
-        """Return a handoff by protocol, or None when it does not exist."""
-        model = self._session.scalar(select(HandoffModel).where(HandoffModel.protocol == protocol))
-        return Handoff.model_validate(model) if model else None

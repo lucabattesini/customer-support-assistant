@@ -16,15 +16,6 @@ class OrderRepository:
         model = self._session.scalar(self._base_query().where(OrderModel.order_id == order_id))
         return Order.model_validate(model) if model else None
 
-    def list_by_customer(self, customer_id: int) -> list[Order]:
-        """Return the orders of a customer, newest first."""
-        query = (
-            self._base_query()
-            .where(OrderModel.customer_id == customer_id)
-            .order_by(OrderModel.order_date.desc(), OrderModel.order_id.desc())
-        )
-        return [Order.model_validate(model) for model in self._session.scalars(query)]
-
     def _base_query(self) -> Select[tuple[OrderModel]]:
         return select(OrderModel).options(
             selectinload(OrderModel.items).joinedload(OrderItemModel.product)
