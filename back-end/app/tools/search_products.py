@@ -14,6 +14,7 @@ class SearchProductsInput(BaseModel):
     min_price: Decimal | None = Field(default=None, ge=0)
     max_price: Decimal | None = Field(default=None, ge=0)
     only_available: bool = True
+    on_sale: bool = False
     limit: int = Field(default=5, ge=1, le=10)
 
 
@@ -27,6 +28,7 @@ def search_products(context: ToolContext, arguments: SearchProductsInput) -> Pay
             min_price=arguments.min_price,
             max_price=arguments.max_price,
             only_available=arguments.only_available,
+            on_sale=arguments.on_sale,
             limit=arguments.limit,
         )
     return {

@@ -23,7 +23,10 @@ class ServiceContainer:
     def __init__(self, session: Session, config: StoreConfig) -> None:
         self.pricing = PricingService(PromotionRepository(session), config.pricing)
         self.catalog = CatalogService(
-            ProductRepository(session), CategoryRepository(session), self.pricing
+            ProductRepository(session),
+            CategoryRepository(session),
+            self.pricing,
+            similarity_specs=config.catalog.similarity_specs,
         )
         self.orders = OrderService(OrderRepository(session), CustomerRepository(session))
         self.returns = ReturnsService(config.returns)

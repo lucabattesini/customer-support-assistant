@@ -31,6 +31,14 @@ def test_search_respects_limit(call_tool):
     assert payload["total_found"] == 7
 
 
+def test_search_on_sale_lists_every_active_promotion(call_tool):
+    payload = call_tool("search_products", {"on_sale": True, "limit": 10})
+
+    assert ids(payload) == [102, 107]
+    assert payload["total_found"] == 2
+    assert all("promotional_price" in product for product in payload["products"])
+
+
 def test_search_unknown_category_offers_available_ones(call_tool):
     payload = call_tool("search_products", {"category": "saxophone"})
 

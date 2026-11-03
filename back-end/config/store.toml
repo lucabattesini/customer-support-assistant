@@ -43,3 +43,6 @@ legal_warranty_days = 90
 
 [handoff]
 response_time_hours = 24
+
+[catalog]
+similarity_specs = ["strings", "electronics"]

@@ -30,7 +30,7 @@ def handoff_to_human(context: ToolContext, arguments: HandoffToHumanInput) -> Pa
         response_time_hours = services.handoffs.response_time_hours
     return {
         "protocol": handoff.protocol,
-        "response_time_hours": response_time_hours,
+        "response_time_business_hours": response_time_hours,
         "created_at": handoff.created_at.isoformat(),
     }
 

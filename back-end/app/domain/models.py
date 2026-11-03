@@ -12,6 +12,10 @@ from app.domain.enums import (
     ProductStatus,
 )
 
+IN_PROGRESS_ORDER_STATUSES = frozenset(
+    {OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.SHIPPED}
+)
+
 
 class DomainModel(BaseModel):
     """Immutable domain object that can be built from ORM instances."""
@@ -94,6 +98,14 @@ class Order(DomainModel):
     estimated_delivery: date | None = None
     notes: str | None = None
     items: list[OrderItem] = []
+
+    def is_delivery_overdue(self, today: date) -> bool:
+        """Whether the estimated delivery date has passed while the order is still in transit."""
+        return (
+            self.status in IN_PROGRESS_ORDER_STATUSES
+            and self.estimated_delivery is not None
+            and self.estimated_delivery < today
+        )
 
 
 class PolicySection(DomainModel):

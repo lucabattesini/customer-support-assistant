@@ -108,6 +108,13 @@ class ReturnsConfig(BaseModel):
     legal_warranty_days: int = Field(ge=0)
 
 
+class CatalogConfig(BaseModel):
+    """Catalog behavior settings."""
+
+    similarity_specs: list[str] = Field(default_factory=list)
+    """Product spec keys that define a similar product, in priority order."""
+
+
 class HandoffConfig(BaseModel):
     """Human handoff settings."""
 
@@ -123,6 +130,7 @@ class StoreConfig(BaseModel):
     pricing: PricingConfig
     returns: ReturnsConfig
     handoff: HandoffConfig
+    catalog: CatalogConfig = Field(default_factory=CatalogConfig)
 
     def hours_for(self, weekday: Weekday) -> DayHours | None:
         """Return the opening hours of a weekday, or None when the store is closed."""
