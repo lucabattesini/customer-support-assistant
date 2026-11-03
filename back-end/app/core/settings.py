@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     cors_origins: str = ""
     store_config_path: Path = BASE_DIR / "config" / "store.toml"
     prompts_dir: Path = BASE_DIR / "prompts"
+    seed_dir: Path = BASE_DIR / "seed"
 
     @field_validator(
         "openrouter_api_key",
