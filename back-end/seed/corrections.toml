@@ -1,0 +1,7 @@
+# Corrections applied while loading the CSVs, which stay exactly as delivered.
+
+[products]
+# Descriptions that describe another product than the name, e.g. "Music Man Bass 1X"
+# described as a Fender Jazz Bass. The name and specs are kept; the description is dropped
+# so the assistant never states wrong details.
+drop_description = [135, 136, 137, 139, 140, 142, 144]
