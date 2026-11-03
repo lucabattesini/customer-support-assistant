@@ -15,8 +15,8 @@ from app.core.store_config import (
     StoreInfo,
     Weekday,
 )
-from app.db.sample_data import load_sample_data
 from app.db.session import build_engine, build_session_factory, init_db, session_scope
+from tests.fixtures.sample_data import load_sample_data
 
 WEEKDAY_HOURS = DayHours(opens=time(9), closes=time(18))
 

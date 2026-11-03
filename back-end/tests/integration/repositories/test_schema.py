@@ -11,8 +11,8 @@ from app.db.models import (
     ProductModel,
     PromotionModel,
 )
-from app.db.sample_data import load_sample_data
 from app.db.session import build_engine, build_session_factory, init_db, session_scope
+from tests.fixtures.sample_data import load_sample_data
 
 
 def test_all_tables_are_created(engine):
