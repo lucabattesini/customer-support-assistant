@@ -3,9 +3,8 @@ from datetime import date, timedelta
 
 from app.core.store_config import ReturnsConfig
 from app.domain.enums import OrderStatus, ReturnReason
-from app.domain.models import Order
+from app.domain.models import IN_PROGRESS_ORDER_STATUSES, Order
 
-NOT_RECEIVED_STATUSES = {OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.SHIPPED}
 RECEIPT_BASED_REASONS = {ReturnReason.REGRET, ReturnReason.PREFERENCE}
 
 
@@ -44,7 +43,7 @@ class ReturnsService:
 
     def check(self, order: Order, reason: ReturnReason, today: date) -> ReturnEligibility:
         """Check whether an order can be returned or exchanged for a reason on a date."""
-        if order.status is OrderStatus.CANCELLED or order.status in NOT_RECEIVED_STATUSES:
+        if order.status is OrderStatus.CANCELLED or order.status in IN_PROGRESS_ORDER_STATUSES:
             return ReturnEligibility(
                 order_id=order.order_id,
                 reason=reason,
