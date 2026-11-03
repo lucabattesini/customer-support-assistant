@@ -17,7 +17,7 @@ from app.db.models import (
 
 
 def load_sample_data(session: Session) -> None:
-    """Replace all data with a small synthetic dataset for development and tests.
+    """Replace all data with a small synthetic dataset for tests.
 
     The dataset uses fictional brands and customers and covers the business cases the
     assistant must handle: active, expired and overlapping promotions, out-of-stock,

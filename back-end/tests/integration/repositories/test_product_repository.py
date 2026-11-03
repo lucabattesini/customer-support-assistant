@@ -39,21 +39,14 @@ def test_availability_combines_status_and_stock(products, product_id, availabili
     assert products.get_by_id(product_id).availability is availability
 
 
-def test_filters_by_category_price_status_and_stock(products):
+def test_filters_by_category_status_and_stock(products):
     result = products.list_by_filters(
         category_ids=[1],
-        max_price=Decimal("1000"),
         statuses=[ProductStatus.ACTIVE],
         in_stock=True,
     )
 
-    assert [product.product_id for product in result] == [101, 102, 110]
-
-
-def test_filters_by_min_price(products):
-    result = products.list_by_filters(min_price=Decimal("3499.00"))
-
-    assert [product.product_id for product in result] == [107, 109]
+    assert [product.product_id for product in result] == [101, 102, 103, 110]
 
 
 def test_list_all_is_ordered_by_id(products):

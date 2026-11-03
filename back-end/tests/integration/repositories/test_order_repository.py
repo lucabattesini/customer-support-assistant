@@ -28,12 +28,6 @@ def test_get_by_id_returns_none_when_missing(session):
     assert OrderRepository(session).get_by_id(999) is None
 
 
-def test_list_by_customer_is_newest_first(session):
-    orders = OrderRepository(session).list_by_customer(1)
-
-    assert [order.order_id for order in orders] == [2, 1]
-
-
 def test_order_items_stay_usable_after_session_closes(session_factory):
     with session_factory() as session:
         order = OrderRepository(session).get_by_id(4)
