@@ -1,0 +1,1 @@
+Get the current date and time in the store timezone, whether the store is open now, today's hours and the next opening time. Use it whenever the answer depends on today or now, such as "are you open?" or "can I visit today?". Never assume the date or time yourself.
