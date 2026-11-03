@@ -43,7 +43,7 @@ Prompts live in `back-end/prompts/` as markdown files: the system prompt split b
 - **Open now**: uses the store timezone and business hours.
 - **Out of scope**: refuses accessories, since the store sells instruments only, and unrelated topics.
 - **Handoff**: registers a case for the team with a protocol number when the agent cannot solve it.
-- **Tests**: 266 automated tests without LLM calls, plus 19 manual conversations against the real model, including prompt injection and multi turn memory.
+- **Tests**: 263 automated tests without LLM calls, plus 19 manual conversations against the real model, including prompt injection and multi turn memory.
 
 ## Technical decisions
 
